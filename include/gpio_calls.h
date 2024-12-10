@@ -1,0 +1,11 @@
+enum {
+	PI_GPIO_INIT=0x0802,
+    
+	PI_GPIO_LAST_OPCODE,
+};
+
+enum {
+	PI_GPIO_ASYNC_LINE=0x1802,
+
+	PI_GPIO_ASYNC_LAST_OPCODE,
+};

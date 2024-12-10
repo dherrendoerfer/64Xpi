@@ -1,0 +1,77 @@
+64Xpi readme file
+
+64Xpi is a 6502 embedded runtime shim for a hardware 65C02 in the Raspberry Pi
+You need a bad6502 board or something compatible to run it.
+
+64Xpi integrates a seamles integration of the 6502 and its functions into the
+Linux host operating system - you may never know it's there, and the 6502 doesn't care.
+
+
+This is work-in-progress - your mileage may vary.
+
+
+For now, C programs can be build using the CC65, CL65 compiler.
+Configuration files, headers and examples are included. 
+Assembler can also be used but the samples are not good ATM.
+
+
+Architecture (really rough)
+- The Rasperry Pi runns the 6502, generating clock and all bus/mem/signal lines.
+- The 65C02 has no idea about anything.
+- The runtime shim provides memory and io to the 6502.
+- There are a number of ways the Pi and the 6502 share information
+    - memory IO: certain memory addresses fetch information from the Pi (like the current time)
+    - synchronous IO: the 6502 saves a request in memory and calls a special address.
+      The Pi stops clocking the 6502 serves the request, and continues after depositing the
+      response to the request to memory.
+    - asynchronous IO: the 6502 saves a request to memory and places the address of that request
+      into a mailbox. A second thread on the Pi serves the request and places the response in memory
+      signaling completion. The 6502 has to actively poll for the completion, but it is never stopped.
+- Using the above techniques, the 6502 gets access to library functions of the Pi, like files and
+  terminal IO.
+- Extended library calls add features like graphics, events, networking, paged memory.
+- Using Linux binfmt_misc, the Pi integrates the 6502 binary format. Just execute what you wrote.
+- The bad65OS Linux mini-distro integrates with VisualStudio Code directly for remote development.
+(more to come)
+
+
+
+Program start
+-------------
+Execuatbles start at 1000
+ARGC,ARGV[] start at 0900 
+
+Program header
+--------------
+The program header identifies the 6502 binaries, and includes loader info for the execution shim.
+
+
+Memory map
+----------
+0000 - 00FF   Zero Page
+0100 - 01FF   CPU STACK
+   
+
+FF00 - FFFF   Assist IO / Vectors
+
+
+Memory Banks
+------------
+
+FFE0 RAM Bank
+FFE1 ROM Bank
+
+
+Vectors
+-------
+FF00 - FF1F           - Video
+FF20 - FF2F           - Time 
+
+FFE0 - FFEF           - MMU
+
+FF02,FF03,FF04,FF05   - Mailboxes  (pointers to mailbox struct)
+FF08,FF09             - Assist Call (Pointer to assist call struct)
+
+FFFA,FFFB             - NMI
+FFFC,FFFD             - Reset
+FFFE,FFFF             - IRQ

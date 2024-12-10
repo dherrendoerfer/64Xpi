@@ -1,0 +1,4 @@
+enum {
+	PI_MMU_INIT=0x0F01,
+  	PI_MMU_LAST_OPCODE,
+};

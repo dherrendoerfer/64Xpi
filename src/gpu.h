@@ -1,0 +1,1 @@
+uint8_t sync_gpu_assist();
