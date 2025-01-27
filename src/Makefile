@@ -14,4 +14,4 @@ install:
 	install -m 755 64xpi /usr/bin/64xpi
 
 clean:
-	rm -f $(OBJS)  
+	rm -f $(OBJS) 64xpi

@@ -12,7 +12,7 @@ int main()
     unsigned char argc = *(unsigned char*)0x0900;
     unsigned int *argv = (unsigned int*)0x0901;
 
-    int i,j,g;
+    int j;
 
     // clear the screen
     puts(CHAR_CLS);

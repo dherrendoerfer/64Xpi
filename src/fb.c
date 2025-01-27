@@ -167,15 +167,15 @@ uint8_t fb_in_vblank()
 /* fb mem io overlay drawing with a pixel cursor
 *
 * 0xFF00, 0xFF01   PIXEL CURSOR BASE X
-* 0xFF02, 0xFF03                BASE Y
+* 0xFF02, 0xFF03                BASE Y       WRITING CURSOR UPDATES VIRTUAL X/Y
 * 0xFF04           PIXEL at X/Y              WRITES PALLETE VAL
-* 0xFF05           PIXEL at X+1/Y
+* 0xFF05           PIXEL at X+1/Y            WRITES PALLETE VAL, MODIFIES VIRTUAL X/Y
 * 0xFF06           PIXEL at X/Y+1
 * 0xFF07           PIXEL at X-1/Y
 * 0xFF08           PIXEL at X/Y-1
-* 0xFF09           PIXEL at (CUSRSOR X/Y+1)
+* 0xFF09           PIXEL at (CUSRSOR X/Y+1)  WRITES PALLETE VAL, MODIFIES VIRTUAL X/Y, CURSOR
 * 0xFF0A           PIXEL at (CUSRSOR X+1/Y)
-* 0xFF0B           PAN SCREEN(dirction)
+* 0xFF0B           PAN SCREEN(direction)
 * 0xFF0C           IN VSYNC
 */
 

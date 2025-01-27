@@ -1,5 +1,6 @@
 enum {
-	PI_FB_INIT=0x0801,
+	PI_FB=0x0900,
+	PI_FB_INIT,
     PI_FB_POINT,
     PI_FB_POINTRGB,
 	PI_FB_LINE,
@@ -10,7 +11,7 @@ enum {
 };
 
 enum {
-	PI_FB_ASYNC_LINE=0x1801,
+	PI_FB_ASYNC=0x1900,
 
 	PI_FB_ASYNC_LAST_OPCODE,
 };
