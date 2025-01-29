@@ -13,10 +13,12 @@
 #include "mem.h"
 #include "fb.h"
 #include "time.h"
+#include "mbox.h"
 #include "mmu.h"
 #include "../include/libC_calls.h"
 #include "../include/fb_calls.h"
 #include "../include/time_calls.h"
+#include "../include/mbox_calls.h"
 #include "../include/mmu_calls.h"
 
 int cb_puts(uint16_t addr)
@@ -149,6 +151,8 @@ uint8_t sync_libC_assist()
         return sync_time_assist();
       case PI_MMU:
         return sync_mmu_assist();
+      case PI_MBOX:
+        return sync_mbox_assist();
     }
  
     switch (data)

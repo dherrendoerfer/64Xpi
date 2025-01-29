@@ -3,7 +3,7 @@ CC = gcc
 # Important we need to turn optimization on for the cpu driver
 CFLAGS = -march=native -Ofast -funroll-loops -fomit-frame-pointer 
 
-OBJS	= main.o fb.o libC_assist.o cpu.o mem.o time.o mmu.o
+OBJS	= main.o fb.o libC_assist.o cpu.o mem.o time.o mmu.o mbox.o
 
 
 all: $(OBJS)

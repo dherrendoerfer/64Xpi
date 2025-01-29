@@ -5,6 +5,7 @@
 
 #include "pi_libc.h"
 #include "pi_fb.h"
+#include "pi_mbox.h"
 #include "pi_time.h"
 
 // our message buffer
@@ -182,6 +183,25 @@ int main()
     puts("You entered:");
     puts(msg);
     puts("\n");
+
+    mbox_init();
+    system("sleep 2");
+   
+    // write to mbox0
+    *(unsigned int *)0xFFF0 = 0x100;
+    // again ..
+    system("sleep 1");
+    *(unsigned int *)0xFFF0 = 0x100;
+
+    // ping the other mboxes
+    system("sleep 1");
+    *(unsigned int *)0xFFF2 = 0x100;
+
+    system("sleep 1");
+    *(unsigned int *)0xFFF4 = 0x100;
+
+    system("sleep 1");
+    *(unsigned int *)0xFFF6 = 0x100;
 
     system("sleep 10");
 

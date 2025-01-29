@@ -213,8 +213,9 @@ int step65C02()
 //  }
 //  else {
     ndelay20;
+    ndelay10;
 //  }
-  asm volatile ("sev");
+  //asm volatile ("sev");
 
 //  if (!bus_rw && bus_addr == 0xFFF9)
 //    return 1;

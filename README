@@ -62,8 +62,18 @@ Detailed Hardware and Software architecture (at the moment)
 depending on the code (Yes, you have to choose to enable hardware) you can have memory pages,
 graphics access hardware, a timer and much more (work in process)
 
-Program start
--------------
+Implemented functions:
+----------------------
+
+Framebuffer
+MMU / DMA Engine
+MAILBOX 
+Terminal
+Linux File I/O
+
+
+6502 Program start
+------------------
 Execuatbles start at 1000
 ARGC,ARGV[] start at 0900 
 
@@ -77,7 +87,7 @@ Memory map
 ----------
 0000 - 00FF   Zero Page
 0100 - 01FF   CPU STACK
-   
+FF00 - 0000   Top Page
 
 FF00 - FFFF   Assist IO / Vectors
 
@@ -89,14 +99,16 @@ FFE0 RAM Bank
 FFE1 ROM Bank
 
 
-Vectors
--------
+Mem Vectors
+-----------
 FF00 - FF1F           - Video
 FF20 - FF2F           - Time 
 
 FFE0 - FFEF           - MMU
 
-FFF2,FFF3,FF0F,FFF5   - Mailboxes  (pointers to mailbox struct)
+FFF0-1,FFF2-3,
+FFF4-5,FFF6-7         - Mailboxes  (pointers to mailbox struct)
+
 FFF8,FFF9             - Assist Call (Pointer to assist call struct)
 
 FFFA,FFFB             - NMI

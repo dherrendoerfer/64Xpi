@@ -440,3 +440,19 @@ uint8_t sync_fb_assist()
 
     return 0;
 }
+
+void async_fb_assist(uint16_t addr)
+{    
+    uint16_t data=*(uint16_t*)mem_base(addr);
+
+    switch (data)
+    {
+    case PI_FB_INIT:
+        fb_init();
+        return;
+    default:
+        return;
+    }
+
+    return;
+}

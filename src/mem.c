@@ -116,27 +116,6 @@ static void write_himem2_top(uint16_t address, uint8_t val)
   // Top 255 bytes is always pinned to bank0
   //
 
-  // Mailboxes (async calls, 4 of them. Deposit pointers to the message)
-  if (address == 0xFFF1) {
-    himem2[himem2_index[0]+address] = val;
-
-  }
-
-  if (address == 0xFFF3) {
-    himem2[himem2_index[0]+address] = val;
- 
-  }
-
-  if (address == 0xFFF5) {
-    himem2[himem2_index[0]+address] = val;
- 
-  }
-
-  if (address == 0xFFF7) {
-    himem2[himem2_index[0]+address] = val;
- 
-  }
-
   // Function (library) callback (deposits a pointer to the call)
   if (address == 0xFFF8) {
       himem2[himem2_index[0]+address] = val;

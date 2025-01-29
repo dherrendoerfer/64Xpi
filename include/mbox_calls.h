@@ -1,5 +1,5 @@
 enum {
-	PI_MBOX=0x0201,
+	PI_MBOX=0x0200,
 	PI_MBOX_INIT,
   	PI_MBOX_LAST_OPCODE,
 };
