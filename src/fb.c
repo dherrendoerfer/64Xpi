@@ -54,10 +54,6 @@ static void _pointRGB(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b )
     *((uint16_t*) (fbbuffer + location)) = pixel;
 }
 
-//inline int sgn(uint16_t value)
-//{
-//  return value < 0 ? -1 : 1;
-//}
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
 
 static void _line(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1, uint8_t col)

@@ -5,7 +5,7 @@ if [ -e /proc/sys/fs/binfmt_misc/64Xpi ]; then
   exit 1
 fi
 
-if [ ! -e /proc/sys/fs/binfmt_misc ]; then
+if [ ! -e /proc/sys/fs/binfmt_misc/status ]; then
   modprobe binfmt-misc
   mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
 fi
