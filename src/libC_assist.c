@@ -24,7 +24,7 @@
 int cb_puts(uint16_t addr)
 {
     uint16_t text=*(uint16_t*)mem_base(addr+2);
-    printf("%s",(char*)mem_base(text));
+    fprintf(stdout,"%s",(char*)mem_base(text));
 
     return 0;
 }
@@ -136,6 +136,23 @@ int cb_sysexit(uint16_t addr)
     return 0; // make the compiler happy
 }
 
+int cb_fsync(uint16_t addr)
+{
+    uint16_t sys = *(uint16_t*)mem_base(addr+2);
+    uint16_t fd=*(uint16_t*)mem_base(sys);
+    //printf("fsync: fd=%i\n",fd);
+
+    /* Fix for stdout and stderr to make pipes and the console work */
+    if ( fd == 1 ) {
+        return fflush(stdout);
+    }
+    if ( fd == 2 ) {
+        return fflush(stderr);
+    }
+
+    return fsync(fd);
+}
+
 uint8_t sync_libC_assist()
 {    
     uint16_t addr=*(uint16_t*)mem_base(0xFFF8);
@@ -177,10 +194,10 @@ uint8_t sync_libC_assist()
         return cb_lseek(addr);
     case PI_LIBC_UNLINK:
         return cb_unlink(addr);
-
-
     case PI_LIBC_SYSEXIT:
         return cb_sysexit(addr);
+    case PI_LIBC_FSYNC:
+        return cb_fsync(addr);
 
     default:
         return 255;

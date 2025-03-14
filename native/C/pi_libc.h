@@ -243,3 +243,16 @@ int sysexit(int rc)
     return send_for_pi(PI_LIBC_SYSEXIT, sys);
 }
 
+typedef struct {
+	unsigned int    fd;
+} syscall_fsync_t;
+
+int fsync(int fd)
+{
+    syscall_fsync_t *sys;
+    sys=(void*)call_buff;
+
+    sys->fd =        (unsigned int)fd;
+
+    return send_for_pi(PI_LIBC_FSYNC, sys);
+}
