@@ -49,33 +49,33 @@ int main()
     // query the time unit
     time_init();
 
-    time_ns=*(long *)0xFF20;
-    time_s=*(long *)0xFF24;
+    time_ns=PI_TIME_NS;
+    time_s=PI_TIME_S;
     printf("time is: %li.%05li\n",time_s,time_ns);
     system("sleep 1");
 
-    time_ns=*(long *)0xFF20;
-    time_s=*(long *)0xFF24;
+    time_ns=PI_TIME_NS;
+    time_s=PI_TIME_S;
     printf("time is: %li.%05li\n",time_s,time_ns);
     system("sleep 1");
 
-    time_ns=*(long *)0xFF20;
-    time_s=*(long *)0xFF24;
+    time_ns=PI_TIME_NS;
+    time_s=PI_TIME_S;
     printf("time is: %li.%05li\n",time_s,time_ns);
-    system("sleep 10");
+    system("sleep 5");
 
     // query rough ms counter
-    time_ms=*(unsigned long *)0xFF28;
+    time_ms=PI_TIME_MS;
     printf(" time_ms: %lu\n",time_ms);
     system("sleep 1");
 
-    time_ms=*(unsigned long *)0xFF28;
+    time_ms=PI_TIME_MS;
     printf(" time_ms: %lu\n",time_ms);
 
-    *(unsigned int *)0xFF2C = 1000;
-    while ( *(unsigned char *)0xFF2C );
+    PI_TIME_DEADLINE = 1000;
+    while (PI_TIME_DEADLINE_PASSED);
 
-    time_ms=*(unsigned long *)0xFF28;
+    time_ms=PI_TIME_MS;
     printf(" time_ms: %lu\n",time_ms);
     msleep(1000);
 
@@ -188,20 +188,20 @@ int main()
     system("sleep 2");
    
     // write to mbox0
-    *(unsigned int *)0xFFF0 = 0x100;
+    ADDR_MBOX0 = 0x100;
     // again ..
     system("sleep 1");
-    *(unsigned int *)0xFFF0 = 0x100;
+    ADDR_MBOX0 = 0x100;
 
     // ping the other mboxes
     system("sleep 1");
-    *(unsigned int *)0xFFF2 = 0x100;
+    ADDR_MBOX1 = 0x100;
 
     system("sleep 1");
-    *(unsigned int *)0xFFF4 = 0x100;
+    ADDR_MBOX2 = 0x100;
 
     system("sleep 1");
-    *(unsigned int *)0xFFF6 = 0x100;
+    ADDR_MBOX3 = 0x100;
 
     system("sleep 10");
 
@@ -215,7 +215,7 @@ int main()
     printf("Graphics tests starting\n");
 
     fb_init();
-    printf("Graphics resolution x=%i, y=%i\n",*(unsigned int*)0xFF00, *(unsigned int*)0xFF02);
+    printf("Graphics resolution x=%i, y=%i\n",PI_FB_SIZE_X, PI_FB_SIZE_Y);
     
     for (g=0; g<20; g++) {   
       for (i=0; i<255; i++) {

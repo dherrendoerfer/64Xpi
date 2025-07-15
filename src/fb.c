@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,8 +32,55 @@ int fbfd = -1;
 char *fbbuffer = NULL;
 size_t fbbuflen;
 
+// stencil buffer 
+char* stencil_buf = NULL;
+
+// stamp buffer
+char* stamp_buffer = NULL;
+
+uint8_t  brush_color = 1;
+uint8_t  background_color = 0;
+
 // internal functions, not exposed directly
 //
+uint8_t _cls()
+{
+    bzero((void*)fbbuffer,fbbuflen);
+    return 0;
+}
+
+void _block(uint16_t x, uint16_t y, uint16_t x2, uint16_t y2, unsigned char col) {
+    uint16_t tmp;
+
+    if ( x == x2 || y == y2)
+        return;
+
+    if (x > x2) {
+        tmp=x2;
+        x2=x;
+        x=tmp;
+    }
+    
+    if (y > y2) {
+        tmp=y2;
+        y2=y;
+        y=tmp;
+    }
+    
+    uint16_t pixel = palette[col];
+
+    while (y < y2) {
+        uint32_t location = x*screen_info.bits_per_pixel/8 + 
+                                y*fixed_info.line_length;
+        uint16_t* px = (void*)fbbuffer+location;
+        tmp=x;
+        while (tmp < x2) {
+            *px++ = pixel;
+            tmp++;
+        }
+        y++;
+    }
+}
 
 static inline void _point(uint16_t x, uint16_t y, uint8_t col)
 {
@@ -56,6 +104,56 @@ static void _pointRGB(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b )
 
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
 
+void _line(int x, int y, int x2, int y2, unsigned char col) {
+	bool yLonger=false;
+	int incrementVal, endVal;
+	int shortLen=y2-y;
+	int longLen=x2-x;
+	if (abs(shortLen)>abs(longLen)) {
+		int swap=shortLen;
+		shortLen=longLen;
+		longLen=swap;
+		yLonger=true;
+	}
+	endVal=longLen;
+	if (longLen<0) {
+		incrementVal=-1;
+		longLen=-longLen;
+	} else incrementVal=1;
+	int decInc;
+	if (longLen==0) decInc=0;
+	else decInc = (shortLen << 16) / longLen;
+	int j=0;
+	if (yLonger) {	
+		for (int i=0;i!=endVal;i+=incrementVal) {
+			_point(x+(j >> 16),y+i,col);	
+			j+=decInc;
+		}
+	} else {
+		for (int i=0;i!=endVal;i+=incrementVal) {
+			_point(x+i,y+(j >> 16),col);
+			j+=decInc;
+		}
+	}
+}
+
+/*
+// Draw a line from (x1, y1) to (x2, y2)
+void _line(int x1, int y1, int x2, int y2, unsigned char attr) {
+    int16_t dx = abs(x2 - x1), sx = x1 < x2 ? 1 : -1;
+    int16_t dy = -abs(y2 - y1), sy = y1 < y2 ? 1 : -1;
+    int16_t err = dx + dy, e2;
+
+    while (1) {
+        _point(x1, y1, attr);
+        if (x1 == x2 && y1 == y2) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x1 += sx; }
+        if (e2 <= dx) { err += dx; y1 += sy; }
+    }
+}
+*/
+/*
 static void _line(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1, uint8_t col)
 {
     int16_t deltax=x1 - x;
@@ -90,7 +188,7 @@ static void _line(uint16_t x, uint16_t y, uint16_t x1, uint16_t y1, uint8_t col)
     }
    }
 }
-
+*/
 static void _pan(uint8_t direction)
 {
     uint32_t location;
@@ -100,41 +198,40 @@ static void _pan(uint8_t direction)
     {
     case 0x01:
         /* to the right */
-            _line(0,0,0,screen_info.yres,0);
             memmove( (void*)fbbuffer+2,
                      (void*)fbbuffer,
                     screen_info.yres*fixed_info.line_length-2);
-        break;
+            _line(0,0,0,screen_info.yres-1,background_color);
+            break;
     case 0x09:
         /* to the left */
-            _line(screen_info.xres,0,screen_info.xres,screen_info.yres,0);
             memmove( (void*)fbbuffer,
                      (void*)fbbuffer+2,
                     screen_info.yres*fixed_info.line_length-0);
-        break;
+            _line(screen_info.xres-1,0,screen_info.xres-1,screen_info.yres-1,background_color);
+            break;
     case 0x10:
-        /* up */
+        /* down */
             location = (uint32_t)fbbuffer+fixed_info.line_length;
             memmove( (void*)location,
                      (void*) fbbuffer,
                     (screen_info.yres-1)*fixed_info.line_length);
-            _line(screen_info.xres,0,screen_info.xres,screen_info.yres,0);
-        
+            _line(0,0,screen_info.xres-1,0,background_color);
         break;
     case 0x90:
-        /* down */
+        /* up */
             location = (uint32_t)fbbuffer+fixed_info.line_length;
             memmove( (void*) fbbuffer,
                      (void*) location,
                     (screen_info.yres-1)*fixed_info.line_length);
-            _line(0,0,screen_info.xres,0,0);
-        
+            _line(0,screen_info.yres-1,screen_info.xres-1,screen_info.yres-1,background_color);
         break;
 
     default:
         break;
     }
 }
+
 uint8_t fb_wait_vsync()
 {
     int zero = 0;
@@ -172,13 +269,16 @@ uint8_t fb_in_vblank()
 * 0xFF09           PIXEL at (CUSRSOR X/Y+1)  WRITES PALLETE VAL, MODIFIES VIRTUAL X/Y, CURSOR
 * 0xFF0A           PIXEL at (CUSRSOR X+1/Y)
 * 0xFF0B           PAN SCREEN(direction)
-* 0xFF0C           IN VSYNC
+* ...           
+* 0xFF0E           BRUSH COLOR          
+* 0xFF0F           BACKGROUND COLOR
 */
 
 uint16_t p_cursor_base_x;
 uint16_t p_cursor_base_y;
 uint16_t p_cursor_x;
 uint16_t p_cursor_y;
+
 
 void fb_mem_io_write(uint16_t address, uint8_t data)
 {
@@ -230,6 +330,12 @@ void fb_mem_io_write(uint16_t address, uint8_t data)
         return;
     case 0x0B:
         _pan(data);
+        return;
+    case 0x0E:
+        brush_color=data;
+        return;
+    case 0x0F:
+        background_color=data;
         return;
 
     default:
@@ -373,6 +479,7 @@ uint8_t fb_line(uint16_t addr)
 
     return 0;
 }
+
 uint8_t fb_circle(uint16_t addr)
 {
     uint16_t sys = *(uint16_t*)mem_base(addr+2);
@@ -407,9 +514,51 @@ uint8_t fb_circle(uint16_t addr)
         }
     }
 
-    return(0);
+    return 0;
 }
 
+uint8_t fb_cls(uint16_t addr)
+{ 
+    uint16_t sys = *(uint16_t*)mem_base(addr+2);
+
+    //printf("fb_cls()\n");
+
+    _cls();
+
+    return 0;
+}
+
+uint8_t fb_block(uint16_t addr)
+{ 
+    uint16_t sys = *(uint16_t*)mem_base(addr+2);
+    uint16_t x=*(uint16_t*)mem_base(sys);
+    uint16_t y=*(uint16_t*)mem_base(sys+2);
+    uint16_t x1=*(uint16_t*)mem_base(sys+4);
+    uint16_t y1=*(uint16_t*)mem_base(sys+6);
+    uint16_t col=*(uint8_t*)mem_base(sys+8);
+
+    //printf("fb_block x=%i, y=%i, x1=%i, y1=%i, col=%i\n",x,y,x1,y1,col);
+
+    _block(x, y, x1, y1, col);
+
+    return 0;
+}
+
+uint8_t fb_malloc_sbuf(uint16_t addr)
+{
+    uint16_t sys = *(uint16_t*)mem_base(addr+2);
+    uint16_t width=*(uint16_t*)mem_base(sys);
+    uint16_t height=*(uint16_t*)mem_base(sys+2);
+
+    //printf("fb_malloc_sbuf width=%i, height=%i\n",width,height);
+
+    stencil_buf=malloc(width*height);
+
+    if (!stencil_buf) 
+        return 0xff;
+
+    return 0;
+}
 
 uint8_t sync_fb_assist()
 {    
@@ -430,6 +579,12 @@ uint8_t sync_fb_assist()
         return fb_circle(addr);
     case PI_FB_WAITFORVSYNC:
         return fb_wait_vsync();
+    case PI_FB_CLS:
+        return fb_cls(addr);
+    case PI_FB_BLOCK:
+        return fb_block(addr);
+    case PI_FB_MALLOC_SBUF:
+        return fb_malloc_sbuf(addr);
     default:
         return 255;
     }

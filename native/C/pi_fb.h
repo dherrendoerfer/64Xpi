@@ -101,3 +101,48 @@ int fb_wait_for_vsync(void)
     
     return send_for_pi(PI_FB_WAITFORVSYNC, sys);
 }
+
+int fb_cls(void)
+{
+    void *sys;
+    
+    return send_for_pi(PI_FB_CLS, sys);
+}
+
+typedef struct {
+	unsigned int    x;
+	unsigned int    y;
+	unsigned int    x1;
+	unsigned int    y1;
+	unsigned char   col;
+} syscall_fb_block_t;
+
+int fb_block(unsigned int x, unsigned int y, unsigned int x1, unsigned int y1, unsigned char col)
+{
+    syscall_fb_block_t *sys;
+    sys=(void*)call_buff;
+
+    sys->x =        (unsigned int)x;
+    sys->y =        (unsigned int)y;
+    sys->x1 =       (unsigned int)x1;
+    sys->y1 =       (unsigned int)y1;
+    sys->col =      (unsigned char)col;
+
+    return send_for_pi(PI_FB_BLOCK, sys);
+}
+
+typedef struct {
+	unsigned int    width;
+	unsigned int    height;
+} syscall_fb_malloc_sbuf_t;
+
+int fb_malloc_sbuf(unsigned int width, unsigned int height)
+{
+    syscall_fb_malloc_sbuf_t *sys;
+    sys=(void*)call_buff;
+
+    sys->width =        (unsigned int)width;
+    sys->height =       (unsigned int)height;
+
+    return send_for_pi(PI_FB_MALLOC_SBUF, sys);
+}
