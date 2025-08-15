@@ -13,6 +13,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 
 #include "cpu.h"
 #include "mem.h"
@@ -24,9 +25,54 @@
 
 //#define DEBUG 1
 
+//Pi4
+#define BCM2708_PERI_BASE        0xFE000000
+#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controller */
+#define ST_BASE                  (BCM2708_PERI_BASE + 0x003000) /* GPIO controller */
+
+volatile uint64_t timer_now;
+
+uint32_t *st;
+volatile uint64_t *timer;
+
+void setup_timer()
+{
+  int mem_fd;
+  void *st_map;
+
+   /* open /dev/mem */
+   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
+      printf("can't open /dev/mem \n");
+      exit(-1);
+   }
+
+   /* mmap GPIO */
+   st_map = mmap(
+      NULL, 
+      4096,
+      PROT_READ|PROT_WRITE,
+      MAP_SHARED,
+      mem_fd,
+      ST_BASE
+   );
+   /* close fd */
+   close(mem_fd); 
+
+   if (st_map == MAP_FAILED) {
+      printf("mmap error %d\n", (int)st_map);//errno also set!
+      exit(-1);
+   }
+
+  /* store map pointer */
+  st = st_map;
+  timer=(void*)st+4;
+}
+
 int main(int argc, char *argv[])
 {
   //printf("64Xpi\n-----\n\n");
+
+  setup_timer();
 
   //printf("Tests\n");
 
@@ -135,10 +181,18 @@ int main(int argc, char *argv[])
 
     usleep(10000);
     #else
+loop:
+    timer_now=*timer;
+    //if (step65C02()) {
+    //  printf("\nSTEP BREAK\n");
+    //}
+    step65C02();
+    step65C02();
+    step65C02();
+    step65C02();
 
-    if (step65C02()) {
-      printf("\nSTEP BREAK\n");
-    }
+    while(timer_now == *timer);
+    goto loop;
     
     #endif
 

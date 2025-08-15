@@ -95,13 +95,11 @@ static void write_lomem_io(uint16_t address, uint8_t val)
 
 static void write_himem1(uint16_t address, uint8_t val)
 {
-//  mem_type=MEM_TYPE_HIMEM1;
   himem1[himem1_index[himem1_page]+address] = val;
 }
 
 static void write_himem2(uint16_t address, uint8_t val)
 {
-//  mem_type=MEM_TYPE_HIROM;
   if (himem2_page < EXRAM_START) {
     return;
   }

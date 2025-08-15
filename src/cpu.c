@@ -4,7 +4,7 @@
  * 
  */
 
-
+//Pi4
 #define BCM2708_PERI_BASE        0xFE000000
 #define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controller */
 
@@ -174,7 +174,7 @@ int step65C02()
   // 2nd part of clock cycle (clock goes high)
   _clockticks65C02++;
   *(gpio_o_set) = 1<<25;
-  asm volatile ("dsb ishst" : : : "memory");
+  //asm volatile ("dsb ishst" : : : "memory");
 
   // decode addr and !RW from the bus
   bus_rw = tmp & 1<<24;
@@ -204,7 +204,7 @@ int step65C02()
   // Clock cycle start (clock goes low)
   clockticks65C02++;
   *(gpio_o_clear) = 1<<25;
-  asm volatile ("dsb ishst" : : : "memory");
+  //asm volatile ("dsb ishst" : : : "memory");
   
   // Do bus memory writes, then wake up everybody
 //  if (iowrite) {
@@ -213,7 +213,7 @@ int step65C02()
 //  }
 //  else {
     ndelay20;
-    ndelay10;
+//    ndelay10;
 //  }
   //asm volatile ("sev");
 
