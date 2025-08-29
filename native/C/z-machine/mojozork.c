@@ -322,7 +322,8 @@ static void opcode_pull(void)
 {
     uint8 *ptr = varAddress(0, 0);   // top of stack.
     uint16 val = READUI16(ptr);
-    uint8 *store = varAddress((uint8) GState->operands[0], 1);
+    uint8_t *store;
+    *store = varAddress((uint8) GState->operands[0], 1);
     WRITEUI16(store, val);
 } // opcode_pull
 

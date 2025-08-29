@@ -4,10 +4,6 @@
  * 
  */
 
-//Pi4
-#define BCM2708_PERI_BASE        0xFE000000
-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controller */
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -17,6 +13,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "64xpi.h"
 #include "cpu.h"
 #include "mem.h"
 
@@ -24,12 +21,12 @@ int  mem_fd;
 void *gpio_map;
 
 // I/O access
-uint32_t *gpio;
+volatile uint32_t *gpio;
 
 // GPIO helpers
-uint32_t *gpio_i;
-uint32_t *gpio_o_set;
-uint32_t *gpio_o_clear;
+volatile uint32_t *gpio_i;
+volatile uint32_t *gpio_o_set;
+volatile uint32_t *gpio_o_clear;
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
 #define INP_GPIO(g) *(gpio+((g)/10)) &= ~(7<<(((g)%10)*3))
@@ -98,9 +95,9 @@ void setup_gpio()
   /* store map pointer */
   gpio = gpio_map;
 
-  gpio_i        = (void *)gpio+0x34;
-  gpio_o_set    = (void *)gpio+0x1C;
-  gpio_o_clear  = (void *)gpio+0x28;
+  gpio_i        = (volatile void *)gpio+0x34;
+  gpio_o_set    = (volatile void *)gpio+0x1C;
+  gpio_o_clear  = (volatile void *)gpio+0x28;
 }
 
 void init65C02()
@@ -153,28 +150,25 @@ uint32_t data = 0;
 uint32_t page = 0;
 
 static uint32_t tmp;
+static uint32_t vtmp;
 
 int step65C02()
 {  
   //TODO: The delays need to be optimized (scoped)
 
   // Clock cycle start (clock is low)
-  *(gpio) = _65C02_gpio_data_r;
+  *gpio = _65C02_gpio_data_r;
 
   tmp = *gpio_i;
   
-  // Update the irq line
-  if (irq != _irq) {
-    if (himem2_page < 31) {
-      _irq = irq;
-      irq65C02(irq);
-    }
-  } 
-
   // 2nd part of clock cycle (clock goes high)
   _clockticks65C02++;
-  *(gpio_o_set) = 1<<25;
-  //asm volatile ("dsb ishst" : : : "memory");
+  *gpio_o_set = 1<<25;
+  #ifdef ASM_FLUSH
+    asm volatile ("dsb ishst" : : : "memory");
+  #else
+    vtmp=*gpio_o_set; //read back to flush to memory
+  #endif
 
   // decode addr and !RW from the bus
   bus_rw = tmp & 1<<24;
@@ -183,15 +177,20 @@ int step65C02()
   // Set DATA to INP or OUT based on RW
   if (bus_rw) {
     //set DATA to OUT
-    *(gpio) = _65C02_gpio_data_w;
+    *gpio = _65C02_gpio_data_w;
 
     data=mem_read(bus_addr);
 
     //write to 65C02
-    *(gpio_o_clear)=(uint32_t) 0xff;
-    *(gpio_o_set)=data;
+    *gpio_o_clear=(uint32_t) 0xff;
+    *gpio_o_set=data;
+    #ifdef ASM_FLUSH
+      asm volatile ("dsb ishst" : : : "memory");
+      ndelay20;
+    #else
+      vtmp=*gpio_o_set; //read back to flush to memory
+    #endif
 
-    ndelay20;
   }
   else {
     ndelay10;
@@ -203,22 +202,14 @@ int step65C02()
   // Finish the clock cycle
   // Clock cycle start (clock goes low)
   clockticks65C02++;
-  *(gpio_o_clear) = 1<<25;
-  //asm volatile ("dsb ishst" : : : "memory");
-  
-  // Do bus memory writes, then wake up everybody
-//  if (iowrite) {
-//    *(iowrite) = iowdata;
-//    iowrite=0;
-//  }
-//  else {
-    ndelay20;
-//    ndelay10;
-//  }
-  //asm volatile ("sev");
+  *gpio_o_clear = 1<<25;
+  #ifdef ASM_FLUSH
+    asm volatile ("dsb ishst" : : : "memory");
+    ndelay10;
+  #else
+    vtmp=*gpio_o_clear; //read back to flush to memory
+  #endif
 
-//  if (!bus_rw && bus_addr == 0xFFF9)
-//    return 1;
   return 0;
 }
 
@@ -234,10 +225,10 @@ void exec65C02(uint32_t tickcount)
 //
 void one_clock()
 {
-  *(gpio_o_clear) = 1<<25;
+  *gpio_o_clear = 1<<25;
   ndelay20;
   ndelay20;
-  *(gpio_o_set) = 1<<25;
+  *gpio_o_set = 1<<25;
   ndelay20;
   ndelay20;
 }
@@ -251,11 +242,11 @@ void reset65C02()
 #endif
 
   // Perform 6502 reset
-  *(gpio_o_clear) = 1<<26; //set !RESET
+  *gpio_o_clear = 1<<26; //set !RESET
   one_clock();  
   one_clock();  
   one_clock();  
-  *(gpio_o_set) = 1<<26; //clear !RESET
+  *gpio_o_set = 1<<26; //clear !RESET
   clockticks65C02 = 0;
   _clockticks65C02 = 0;
 }
@@ -271,12 +262,11 @@ void irq65C02(int state)
 
   if (state) {
     // Perform 6502 irq
-    *(gpio_o_clear) = 1<<27;  
+    *gpio_o_clear = 1<<27;  
   }
   else {
-    *(gpio_o_set) = 1<<27;
+    *gpio_o_set = 1<<27;
   }
-//  _65C02irq = state;
 }
 
 

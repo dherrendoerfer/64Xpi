@@ -1,5 +1,5 @@
 
-all: test mandelbrot fb_test pi
+all: test mandelbrot fb_test pi dial
 
 test: test.c
 	cl65 -t none --config ./64xpi.cfg  -O -o test.bin test.c
@@ -18,5 +18,10 @@ pi: pi.c
 	cl65 -t none --config ./64xpi.cfg  -O -o pi.bin pi.c
 	../binfmt_misc/mkXpi pi.bin pi
 
+dial: dial.c
+	cl65 -t none --config ./64xpi.cfg  -O -o dial.bin dial.c
+	../binfmt_misc/mkXpi dial.bin dial
+
+
 clean:
-	rm -f test.o test.bin test mandelbrot.o mandelbrot.bin mandelbrot fb_test.o fb_test.bin fb_test pi.bin pi
+	rm -f test.o test.bin test mandelbrot.o mandelbrot.bin mandelbrot fb_test.o fb_test.bin fb_test pi.bin pi.o pi dial.bin dial.o dial

@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include "64xpi.h"
 #include "cpu.h"
 #include "mem.h"
 
@@ -25,10 +26,6 @@
 
 //#define DEBUG 1
 
-//Pi4
-#define BCM2708_PERI_BASE        0xFE000000
-#define GPIO_BASE                (BCM2708_PERI_BASE + 0x200000) /* GPIO controller */
-#define ST_BASE                  (BCM2708_PERI_BASE + 0x003000) /* GPIO controller */
 
 volatile uint64_t timer_now;
 
@@ -65,34 +62,17 @@ void setup_timer()
 
   /* store map pointer */
   st = st_map;
-  timer=(void*)st+4;
+  timer=(volatile void*)st+4;
 }
 
 int main(int argc, char *argv[])
 {
-  //printf("64Xpi\n-----\n\n");
-
   setup_timer();
-
-  //printf("Tests\n");
-
-  //printf("mem_init()\n");
   mem_init();
-
-  //printf("ARGC=%i\n",argc);
-  //printf("ARGV[0]=%s\n",argv[0]);
-  //printf("ARGV[1]=%s\n",argv[1]);
-
-
   
-  //mem_write(0xFFFE,0x00);
-  //mem_write(0xFFFF,0x10);
+  // set the start address to 0x1000
   himem2[himem2_index[0]+0xFFFE] = 0x00;
   himem2[himem2_index[0]+0xFFFF] = 0x10;
-
-  // load test program starting from 0x1000
-//  for (int g=0; g<test_len; g++)
-//    mem_write(0x1000+g,test[g]);
 
   printf("loading %s\n", argv[1]);
 
@@ -136,6 +116,7 @@ int main(int argc, char *argv[])
   // watch execution until reset vector is hit
   for (int g=0; g<80; g++) {
     step65C02();
+    usleep(100);
     
     #ifdef DEBUG
     printf("ADDR:%04X,",bus_addr);
@@ -151,7 +132,6 @@ int main(int argc, char *argv[])
 
 
     if (bus_addr == 0xFFFF) {
-        // hit reset vector.
         break;
     }
     if (g==79) {
@@ -181,21 +161,18 @@ int main(int argc, char *argv[])
 
     usleep(10000);
     #else
-loop:
-    timer_now=*timer;
-    //if (step65C02()) {
-    //  printf("\nSTEP BREAK\n");
-    //}
-    step65C02();
-    step65C02();
-    step65C02();
-    step65C02();
+    loop:
+      timer_now=*timer;
+      //if (step65C02()) {
+      //  printf("\nSTEP BREAK\n");
+      //}
+      step65C02();
+      step65C02();
 
-    while(timer_now == *timer);
+      while(timer_now == *timer);
     goto loop;
     
     #endif
-
   }
 
   return 0;

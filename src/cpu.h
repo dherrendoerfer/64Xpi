@@ -11,7 +11,7 @@
 #define _CPU_H_
 
 // I/O access
-extern uint32_t *gpio;
+extern volatile uint32_t *gpio;
 
 extern volatile uint32_t clockticks65C02;
 extern volatile uint32_t _clockticks65C02;
