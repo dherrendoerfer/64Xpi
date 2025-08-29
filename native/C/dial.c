@@ -23,9 +23,7 @@ int main()
   if (argc < 2)
     usage();
 
-
   sprintf(msg,"nc %s %s", argv[1],argv[2]);
-
   system(msg);
 
   sysexit(2);
